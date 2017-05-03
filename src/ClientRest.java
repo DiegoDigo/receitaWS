@@ -17,16 +17,24 @@ import java.net.URL;
 public class ClientRest {
 
     private static final String URL_SEFAZ = "http://www.receitaws.com.br/v1/cnpj/";
+    private static String cnpj ="";
+    private static String caminho = "";
+    private static String caminhoFinal = "";
 
     public static void main(String[] args){
 
-        if(args.length > 0){
+        if (args.length > 0){
+            cnpj  = String.valueOf(args[0]);
+            caminho = String.valueOf(args[1]);
+        }
+
+        if(!cnpj.isEmpty() || !cnpj.equals("") && !caminho.isEmpty() || !caminho.equals("")){
             try {
-                URL url = new URL(URL_SEFAZ + args);
+                URL url = new URL(URL_SEFAZ + cnpj);
                 HttpURLConnection conexao = (HttpURLConnection) url.openConnection();
                 conexao.setRequestMethod("GET");
                 String conteudo = converterInputStreamParaString(conexao.getInputStream());
-                converterEmObjeto(conteudo, args.toString());
+                converterEmObjeto(conteudo, cnpj);
                 conexao.disconnect();
 
             } catch (Exception e) {
@@ -58,21 +66,25 @@ public class ClientRest {
     }
 
     private static void converterEmObjeto(String conteudo, String cnpj) throws IOException {
-        if(!conteudo.equals("") ||!conteudo.isEmpty()){
-            Gson gson = new Gson();
-            DadosReceita dados = gson.fromJson(conteudo,DadosReceita.class);
-            gravarArquivoTexto(dados, cnpj);
-        }else{
+        if(conteudo.equals("") ||conteudo.isEmpty() || conteudo.contains("ERROR")){
             System.out.printf("Não existe dados para o cnpj informado");
+        }else{
+            Gson gson = new Gson();
+            DadosReceita dados = gson.fromJson(conteudo, DadosReceita.class);
+            gravarArquivoTexto(dados, cnpj);
         }
     }
 
 
     private static void gravarArquivoTexto(DadosReceita dados, String cnpj) throws IOException {
 
-        final String caminho = "c:\\" + cnpj +".txt";
+        if(caminho.endsWith("\\")){
+            caminhoFinal  = caminho + cnpj +".txt";
+        }else{
+            caminhoFinal = caminho +"\\"+ cnpj +".txt";
+        }
 
-        FileWriter arq = new FileWriter(caminho);
+        FileWriter arq = new FileWriter(caminhoFinal);
         PrintWriter gravarArq = new PrintWriter(arq);
         moverDadosParaArquivo(gravarArq,dados);
         arq.close();
